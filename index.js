@@ -16,6 +16,8 @@ async function run() {
     try {
         const database = client.db("productList").collection("productCollection");
         const database2 = client.db("productList").collection("shortProduct");
+        const orderCollection = client.db("productList").collection("allOrders");
+        const userCollection = client.db("productList").collection("user");
 
         // all product list in 
         app.get('/product', async (req, res) => {
@@ -25,10 +27,10 @@ async function run() {
         })
 
         // get single product 
-        app.get('/product/:id', async(req,res)=>{
+        app.get('/product/:id', async (req, res) => {
             const id = req.params.id;
-            const query={_id:ObjectId(id)};
-            const result= await database.findOne(query);
+            const query = { _id: ObjectId(id) };
+            const result = await database.findOne(query);
             res.send(result);
         })
 
@@ -45,6 +47,28 @@ async function run() {
             const product = await database2.findOne(query);
             res.send(product)
         })
+
+
+        /* app.put('/user/email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await movies.updateOne(filter, updateDoc, options);
+            res.send(result);
+        }) */
+
+        // get order collection 
+        app.post('/order/:id', async (req, res) => {
+            const order = req.body;
+            const result = await orderCollection.insertOne(order);
+            res.send(result)
+        })
+
+
     }
     finally {
 
