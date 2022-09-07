@@ -66,6 +66,32 @@ async function run() {
             res.send(product)
         })
 
+        app.get('/admin/:email', async(req,res)=>{
+            const email = req.params.email;
+            const user = await userCollection.findOne({email:email});
+            const isAdmin = user.role === 'admin';
+            res.send({admin:isAdmin})
+        })
+
+        // for admin role
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                const filter = { email: email };
+                const updateDoc = {
+                    $set: { role: 'admin' },
+                };
+                const result = await userCollection.updateOne(filter, updateDoc);
+                res.send(result, token);
+            }
+            else{
+                res.status(403).send({message: 'forbidden'})
+            }
+
+        })
+
 
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
@@ -91,13 +117,13 @@ async function run() {
             const cursor = orderCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
-        })
+        }) */
         app.delete('/order/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await orderCollection.deleteOne(query);
             res.send(result);
-        }) */
+        })
         app.get('/order', verifyJWT, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
@@ -112,9 +138,15 @@ async function run() {
         })
 
         // users data 
-        app.get('/users', async (req,res)=>{
-            const query={}
+        app.get('/users', verifyJWT, async (req, res) => {
+            const query = {}
             const result = await userCollection.find(query).toArray();
+            res.send(result);
+        })
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await userCollection.deleteOne(query);
             res.send(result);
         })
 
