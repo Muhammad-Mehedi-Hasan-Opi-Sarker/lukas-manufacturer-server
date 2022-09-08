@@ -88,7 +88,8 @@ async function run() {
                     $set: { role: 'admin' },
                 };
                 const result = await userCollection.updateOne(filter, updateDoc);
-                res.send(result, token);
+                res.send(result);
+                // change korechilam
             }
             else {
                 res.status(403).send({ message: 'forbidden' })
