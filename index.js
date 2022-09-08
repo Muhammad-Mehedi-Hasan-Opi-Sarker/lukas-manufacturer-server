@@ -37,6 +37,8 @@ async function run() {
         const database2 = client.db("productList").collection("shortProduct");
         const orderCollection = client.db("productList").collection("allOrders");
         const userCollection = client.db("productList").collection("user");
+        const paymentCollection = client.db("productList").collection("payments");
+        const profileCollection = client.db("productList").collection("profile");
 
         // all product list in 
         app.get('/product', async (req, res) => {
@@ -167,6 +169,25 @@ async function run() {
             res.send(order)
         })
 
+
+        // get for transition id 
+    app.patch('/order/:id', verifyJWT,async(req,res)=>{
+        const id = req.params.id;
+        const payment =req.body;
+        const filter = {_id:ObjectId(id)};
+        const updatedDoc= {
+            $set:{
+                paid:true,
+                transactionId: payment.transactionId
+            }
+        }
+        
+        const result = await paymentCollection.insertOne(payment);
+        const updatedBooking = await orderCollection.updateOne(filter, updatedDoc);
+        res.send(updatedDoc);
+    })
+
+
         // users data 
         app.get('/users', verifyJWT, async (req, res) => {
             const query = {}
@@ -178,6 +199,26 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const result = await userCollection.deleteOne(query);
             res.send(result);
+        })
+
+
+        // profile for update 
+        app.put('/profile/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await profileCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
+        app.get('/profile', async(req,res)=>{
+            const email = req.query.email;
+            const query = { email: email };
+            const result = await profileCollection.find(query).toArray();
+            res.send(result)
         })
 
     }
