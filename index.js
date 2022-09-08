@@ -4,6 +4,7 @@ let jwt = require('jsonwebtoken');
 const cors = require('cors');
 const port = process.env.PORT || 5000;
 require('dotenv').config()
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 app.use(cors());
 app.use(express.json());
@@ -66,11 +67,11 @@ async function run() {
             res.send(product)
         })
 
-        app.get('/admin/:email', async(req,res)=>{
+        app.get('/admin/:email', async (req, res) => {
             const email = req.params.email;
-            const user = await userCollection.findOne({email:email});
+            const user = await userCollection.findOne({ email: email });
             const isAdmin = user.role === 'admin';
-            res.send({admin:isAdmin})
+            res.send({ admin: isAdmin })
         })
 
         // for admin role
@@ -86,12 +87,11 @@ async function run() {
                 const result = await userCollection.updateOne(filter, updateDoc);
                 res.send(result, token);
             }
-            else{
-                res.status(403).send({message: 'forbidden'})
+            else {
+                res.status(403).send({ message: 'forbidden' })
             }
 
         })
-
 
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
@@ -106,24 +106,37 @@ async function run() {
             res.send({ result, token });
         })
 
+
+        // payment gate way 
+        app.post('/create-payment-intent',verifyJWT, async(req,res)=>{
+            const service = req.body;
+            const price = service.price;
+            const amount = price*100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types:['card']
+            });
+            res.send({clientSecret:paymentIntent.client_secret})
+        })
+
+
         // get order collection 
         app.post('/order/:id', async (req, res) => {
             const order = req.body;
             const result = await orderCollection.insertOne(order);
             res.send(result)
         })
-        /* app.get('/order', async (req, res) => {
+
+        // order get all comment 
+     /*    app.get('/order', async (req, res) => {
             const query = {};
             const cursor = orderCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
         }) */
-        app.delete('/order/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const result = await orderCollection.deleteOne(query);
-            res.send(result);
-        })
+
+
         app.get('/order', verifyJWT, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
@@ -135,6 +148,23 @@ async function run() {
             else {
                 return res.status(403).send({ message: 'forbidden access' })
             }
+        })
+
+
+        app.delete('/order/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await orderCollection.deleteOne(query);
+            res.send(result);
+        })
+
+
+        // payment for 
+        app.get('order/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const order = await orderCollection.findOne(query);
+            res.send(order)
         })
 
         // users data 
