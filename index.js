@@ -222,17 +222,19 @@ async function run() {
             res.send(result)
         })
 
-        // reviews 
+        // reviews add
         app.post('/reviews/:id', async(req,res)=>{
             const order = req.body;
             const result = await reviewsCollection.insertOne(order);
             res.send(result);
         })
+        // review 
         app.get('/reviews', async(req,res)=>{
             const query ={};
             const cursor = await reviewsCollection.find(query).toArray();
             res.send(cursor)
         })
+        // finish
 
     }
     finally {
