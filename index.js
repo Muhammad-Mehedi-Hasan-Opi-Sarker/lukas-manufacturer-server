@@ -42,7 +42,7 @@ async function run() {
         const reviewsCollection = client.db("productList").collection("reviews");
 
         // all product list in 
-        app.get('/product', verifyJWT , async (req, res) => {
+        app.get('/product', async (req, res) => {
             const query = {};
             const product = await database.find(query).toArray();
             res.send(product);
@@ -58,7 +58,6 @@ async function run() {
         // product post
         app.post('/product', async (req, res) => {
             const product = req.body;
-            console.log(product)
             const result = await database.insertOne(product);
             res.send(result)
         })
