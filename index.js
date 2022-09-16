@@ -42,7 +42,7 @@ async function run() {
         const reviewsCollection = client.db("productList").collection("reviews");
 
         // all product list in 
-        app.get('/product', async (req, res) => {
+        app.get('/product', verifyJWT , async (req, res) => {
             const query = {};
             const product = await database.find(query).toArray();
             res.send(product);
@@ -54,6 +54,13 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const result = await database.findOne(query);
             res.send(result);
+        })
+        // product post
+        app.post('/product', async (req, res) => {
+            const product = req.body;
+            console.log(product)
+            const result = await database.insertOne(product);
+            res.send(result)
         })
 
         // for home product 
@@ -112,16 +119,16 @@ async function run() {
 
 
         // payment gate way 
-        app.post('/create-payment-intent',verifyJWT, async(req,res)=>{
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
             const service = req.body;
             const price = service.price;
-            const amount = price*100;
+            const amount = price * 100;
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
                 currency: 'usd',
-                payment_method_types:['card']
+                payment_method_types: ['card']
             });
-            res.send({clientSecret:paymentIntent.client_secret})
+            res.send({ clientSecret: paymentIntent.client_secret })
         })
 
 
@@ -133,12 +140,12 @@ async function run() {
         })
 
         // order get all comment 
-     /*    app.get('/order', async (req, res) => {
-            const query = {};
-            const cursor = orderCollection.find(query);
-            const result = await cursor.toArray();
-            res.send(result);
-        }) */
+        /*    app.get('/order', async (req, res) => {
+               const query = {};
+               const cursor = orderCollection.find(query);
+               const result = await cursor.toArray();
+               res.send(result);
+           }) */
 
 
         app.get('/order', verifyJWT, async (req, res) => {
@@ -173,21 +180,21 @@ async function run() {
 
 
         // get for transition id 
-    app.patch('/order/:id', verifyJWT,async(req,res)=>{
-        const id = req.params.id;
-        const payment =req.body;
-        const filter = {_id:ObjectId(id)};
-        const updatedDoc= {
-            $set:{
-                paid:true,
-                transactionId: payment.transactionId
+        app.patch('/order/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
             }
-        }
-        
-        const result = await paymentCollection.insertOne(payment);
-        const updatedBooking = await orderCollection.updateOne(filter, updatedDoc);
-        res.send(updatedDoc);
-    })
+
+            const result = await paymentCollection.insertOne(payment);
+            const updatedBooking = await orderCollection.updateOne(filter, updatedDoc);
+            res.send(updatedDoc);
+        })
 
 
         // users data 
@@ -216,7 +223,7 @@ async function run() {
             const result = await profileCollection.updateOne(filter, updateDoc, options);
             res.send(result);
         })
-        app.get('/profile', async(req,res)=>{
+        app.get('/profile', async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
             const result = await profileCollection.find(query).toArray();
@@ -224,14 +231,14 @@ async function run() {
         })
 
         // reviews add
-        app.post('/reviews/:id', async(req,res)=>{
+        app.post('/reviews/:id', async (req, res) => {
             const order = req.body;
             const result = await reviewsCollection.insertOne(order);
             res.send(result);
         })
         // review 
-        app.get('/reviews', async(req,res)=>{
-            const query ={};
+        app.get('/reviews', async (req, res) => {
+            const query = {};
             const cursor = await reviewsCollection.find(query).toArray();
             res.send(cursor)
         })
